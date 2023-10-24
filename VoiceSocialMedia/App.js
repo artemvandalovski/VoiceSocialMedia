@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { Button, View, Text, TouchableWithoutFeedback } from 'react-native';
 import { Audio } from 'expo-av';
 import AudioFeedback from './components/AudioFeedback';
@@ -6,9 +6,32 @@ import AudioFeedback from './components/AudioFeedback';
 export default function App() {
   const [recording, setRecording] = useState(null);
   const [soundInstance, setSoundInstance] = useState(null);
+  const startJingle = useRef(new Audio.Sound());
+  const stopJingle = useRef(new Audio.Sound());
+
+
+  useEffect(() => {
+    async function preloadSounds() {
+      try {
+        await startJingle.current.loadAsync(require('./assets/startJingle.mp3'));
+        await stopJingle.current.loadAsync(require('./assets/stopJingle.mp3'));
+      } catch (error) {
+        console.error("Error loading sound files", error);
+      }
+    }
+    preloadSounds();
+    return () => {
+      startJingle.current.unloadAsync();
+      stopJingle.current.unloadAsync();
+    };
+  }, []);
 
   async function startRecording() {
     try {
+      if (startJingle.current._loaded) {
+        await startJingle.current.stopAsync(); 
+        await startJingle.current.setPositionAsync(0); 
+      }
       console.log('Requesting permissions..');
       await Audio.requestPermissionsAsync();
       await Audio.setAudioModeAsync({
@@ -27,6 +50,11 @@ export default function App() {
   }
 
   async function stopRecording() {
+    if (stopJingle.current._loaded) {
+      await stopJingle.current.stopAsync(); 
+      await stopJingle.current.setPositionAsync(0);
+      await stopJingle.current.playAsync();
+    }
     console.log('Stopping recording..');
     await recording.stopAndUnloadAsync();
     const uri = recording.getURI();
