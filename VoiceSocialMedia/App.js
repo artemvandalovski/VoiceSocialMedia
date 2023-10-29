@@ -13,6 +13,8 @@ export default function App() {
   const startJingle = useRef(new Audio.Sound());
   const stopJingle = useRef(new Audio.Sound());
   const [lastRecordingUri, setLastRecordingUri] = useState(null);
+  const [recordings, setRecordings] = useState([]);
+
 
 
 
@@ -35,8 +37,21 @@ export default function App() {
       );
   });
 
+  function fetchRecordingsFromDB() {
+    db.transaction(tx => {
+      tx.executeSql('SELECT * FROM recordings ORDER BY id DESC LIMIT 3;', [], (_, { rows }) => {
+        const uris = [];
+        for(let i = 0; i < rows.length; i++) {
+          uris.push(rows.item(i).uri);
+        }
+        setRecordings(uris);
+      });
+    });
+  }
+
 
     preloadSounds();
+    fetchRecordingsFromDB();
     return () => {
       startJingle.current.unloadAsync();
       stopJingle.current.unloadAsync();
@@ -109,30 +124,41 @@ async function playSound() {
 
 async function saveRecordingToDB() {
   if (lastRecordingUri) {
-      const tempUri = lastRecordingUri;
-      const fileExtension = tempUri.split('.').pop();
+    const tempUri = lastRecordingUri;
+    const fileExtension = tempUri.split('.').pop();
+    const timestamp = new Date().getTime();
+    const newUri = `${FileSystem.documentDirectory}recording_${timestamp}.${fileExtension}`;
 
-      const newUri = `${FileSystem.documentDirectory}recording.${fileExtension}`;
+    await FileSystem.copyAsync({
+      from: tempUri,
+      to: newUri
+    });
 
-      await FileSystem.copyAsync({
-          from: tempUri,
-          to: newUri
-      });
-      
-      db.transaction(tx => {
-        tx.executeSql('INSERT INTO recordings (uri) VALUES (?);', [newUri]);
+    db.transaction(tx => {
+      tx.executeSql('INSERT INTO recordings (uri) VALUES (?);', [newUri]);
     },
     (error) => {
-        console.error("DB Error:", error); 
+      console.error("DB Error:", error);
     },
     () => {
-        console.log('Recording saved to DB with URI:', newUri);
+      console.log('Recording saved to DB with URI:', newUri);
+      db.transaction(tx => {
+        tx.executeSql('SELECT * FROM recordings ORDER BY id DESC LIMIT 3;', [], (_, { rows }) => {
+          const uris = [];
+          for(let i = 0; i < rows.length; i++) {
+            uris.push(rows.item(i).uri);
+          }
+          setRecordings(uris);
+        });
+      });
     });
-    
   } else {
-      console.log('No recording to save');
+    console.log('No recording to save');
   }
 }
+
+
+
 
 
 async function playSavedRecording() {
@@ -148,6 +174,16 @@ async function playSavedRecording() {
           }
       });
   });
+}
+
+function playRecording(index) {
+  if (recordings[index]) {
+    (async () => {
+      const { sound } = await Audio.Sound.createAsync({ uri: recordings[index] });
+      sound.setOnPlaybackStatusUpdate((status) => playbackStatusUpdate(status, sound));
+      await sound.playAsync();
+    })();
+  }
 }
 
 
@@ -173,12 +209,24 @@ async function playSavedRecording() {
         onPress={saveRecordingToDB}
       />
       <View style={{ height: 20 }} />
-      <Button 
-        title="Play Saved Recording"
-        onPress={playSavedRecording}
-      />
+    <Button 
+      title="Play Audio 1"
+      onPress={() => playRecording(0)}
+    />
+
+    <View style={{ height: 20 }} />
+    <Button 
+      title="Play Audio 2"
+      onPress={() => playRecording(1)}
+    />
+
+    <View style={{ height: 20 }} />
+    <Button 
+      title="Play Audio 3"
+      onPress={() => playRecording(2)}
+    />
     </View>
+
   );
 
-  
 }
