@@ -2,6 +2,10 @@ import React, { useState, useRef, useEffect } from 'react';
 import { Button, View, Text, TouchableWithoutFeedback } from 'react-native';
 import { Audio } from 'expo-av';
 import AudioFeedback from './components/AudioFeedback';
+import * as SQLite from 'expo-sqlite';
+import * as FileSystem from 'expo-file-system';
+
+const db = SQLite.openDatabase('recordings.db');
 
 export default function App() {
   const [recording, setRecording] = useState(null);
@@ -24,6 +28,11 @@ export default function App() {
       startJingle.current.unloadAsync();
       stopJingle.current.unloadAsync();
     };
+
+    db.transaction(tx => {
+      tx.executeSql('CREATE TABLE IF NOT EXISTS recordings (id INTEGER PRIMARY KEY AUTOINCREMENT, uri TEXT);');
+    });
+
   }, []);
 
   async function startRecording() {
@@ -61,18 +70,64 @@ export default function App() {
     console.log('Recording stopped and stored at', uri);
 
     const { sound } = await Audio.Sound.createAsync({ uri });
+    sound.setOnPlaybackStatusUpdate((status) => playbackStatusUpdate(status, sound));
     setSoundInstance(sound);
     setRecording(null);
   }
 
-  async function playSound() {
-    if (soundInstance) {
-      console.log('Playing Sound');
-      await soundInstance.playAsync();
-    } else {
-      console.log('No sound instance available');
+  function playbackStatusUpdate(status, sound) {
+    if (status.didJustFinish) {
+       // sound.setPositionAsync(0);
     }
+}
+
+
+async function playSound() {
+  if (soundInstance) {
+      console.log('Playing Sound');
+      await soundInstance.setPositionAsync(0);
+      await soundInstance.playAsync();
+  } else {
+      console.log('No sound instance available');
   }
+}
+
+
+  async function saveRecordingToDB() {
+    if (recording) {
+        const tempUri = recording.getURI();
+        const fileExtension = tempUri.split('.').pop();
+
+        const newUri = `${FileSystem.documentDirectory}recording.${fileExtension}`;
+
+        await FileSystem.copyAsync({
+            from: tempUri,
+            to: newUri
+        });
+        
+        db.transaction(tx => {
+            tx.executeSql('INSERT INTO recordings (uri) VALUES (?);', [newUri]);
+        }, null, () => console.log('Recording saved to DB with URI:', newUri));
+    } else {
+        console.log('No recording to save');
+    }
+}
+
+async function playSavedRecording() {
+  db.transaction(tx => {
+      tx.executeSql('SELECT * FROM recordings ORDER BY id DESC LIMIT 1;', [], (_, { rows }) => {
+          const uri = rows.item(0).uri;
+          if (uri) {
+              (async () => {
+                  const { sound } = await Audio.Sound.createAsync({ uri });
+                  sound.setOnPlaybackStatusUpdate((status) => playbackStatusUpdate(status, sound));
+                  await sound.playAsync();
+              })();
+          }
+      });
+  });
+}
+
 
   return (
     <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
@@ -90,6 +145,18 @@ export default function App() {
         title="Play Sound"
         onPress={playSound}
       />
+
+<Button 
+        title="Save Recording"
+        onPress={saveRecordingToDB}
+      />
+      <View style={{ height: 20 }} />
+      <Button 
+        title="Play Saved Recording"
+        onPress={playSavedRecording}
+      />
     </View>
   );
+
+  
 }
