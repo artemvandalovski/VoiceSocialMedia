@@ -12,6 +12,8 @@ export default function App() {
   const [soundInstance, setSoundInstance] = useState(null);
   const startJingle = useRef(new Audio.Sound());
   const stopJingle = useRef(new Audio.Sound());
+  const [lastRecordingUri, setLastRecordingUri] = useState(null);
+
 
 
   useEffect(() => {
@@ -23,15 +25,24 @@ export default function App() {
         console.error("Error loading sound files", error);
       }
     }
+
+    db.transaction(tx => {
+      tx.executeSql(
+          'CREATE TABLE IF NOT EXISTS recordings (id INTEGER PRIMARY KEY AUTOINCREMENT, uri TEXT);',
+          [],
+          () => console.log('Table created or already exists'),
+          (_, error) => console.error('Table creation error:', error)
+      );
+  });
+
+
     preloadSounds();
     return () => {
       startJingle.current.unloadAsync();
       stopJingle.current.unloadAsync();
     };
 
-    db.transaction(tx => {
-      tx.executeSql('CREATE TABLE IF NOT EXISTS recordings (id INTEGER PRIMARY KEY AUTOINCREMENT, uri TEXT);');
-    });
+    
 
   }, []);
 
@@ -67,6 +78,9 @@ export default function App() {
     console.log('Stopping recording..');
     await recording.stopAndUnloadAsync();
     const uri = recording.getURI();
+    setLastRecordingUri(uri);
+    console.log('Recording stopped and stored at', uri);
+
     console.log('Recording stopped and stored at', uri);
 
     const { sound } = await Audio.Sound.createAsync({ uri });
@@ -93,25 +107,33 @@ async function playSound() {
 }
 
 
-  async function saveRecordingToDB() {
-    if (recording) {
-        const tempUri = recording.getURI();
-        const fileExtension = tempUri.split('.').pop();
+async function saveRecordingToDB() {
+  if (lastRecordingUri) {
+      const tempUri = lastRecordingUri;
+      const fileExtension = tempUri.split('.').pop();
 
-        const newUri = `${FileSystem.documentDirectory}recording.${fileExtension}`;
+      const newUri = `${FileSystem.documentDirectory}recording.${fileExtension}`;
 
-        await FileSystem.copyAsync({
-            from: tempUri,
-            to: newUri
-        });
-        
-        db.transaction(tx => {
-            tx.executeSql('INSERT INTO recordings (uri) VALUES (?);', [newUri]);
-        }, null, () => console.log('Recording saved to DB with URI:', newUri));
-    } else {
-        console.log('No recording to save');
-    }
+      await FileSystem.copyAsync({
+          from: tempUri,
+          to: newUri
+      });
+      
+      db.transaction(tx => {
+        tx.executeSql('INSERT INTO recordings (uri) VALUES (?);', [newUri]);
+    },
+    (error) => {
+        console.error("DB Error:", error); 
+    },
+    () => {
+        console.log('Recording saved to DB with URI:', newUri);
+    });
+    
+  } else {
+      console.log('No recording to save');
+  }
 }
+
 
 async function playSavedRecording() {
   db.transaction(tx => {
