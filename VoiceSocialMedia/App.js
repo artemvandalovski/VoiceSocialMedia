@@ -4,6 +4,8 @@ import { Audio } from 'expo-av';
 import AudioFeedback from './components/AudioFeedback';
 import * as SQLite from 'expo-sqlite';
 import * as FileSystem from 'expo-file-system';
+import FriendAudioPlayer from './components/FriendAudioPlayer';
+import Friend from './models/Friend';
 
 const db = SQLite.openDatabase('recordings.db');
 
@@ -14,6 +16,13 @@ export default function App() {
   const stopJingle = useRef(new Audio.Sound());
   const [lastRecordingUri, setLastRecordingUri] = useState(null);
   const [recordings, setRecordings] = useState([]);
+
+  const Steve = new Friend('Steve', [
+    require('./assets/steveAudio1.mp3'), 
+    require('./assets/steveAudio2.mp3'), 
+    require('./assets/steveAudio3.mp3')
+  ]);
+  
 
 
 
@@ -188,7 +197,12 @@ function playRecording(index) {
 
 
   return (
+   
+
     <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+
+<FriendAudioPlayer friend={Steve} />
+
       {recording && <AudioFeedback isRecording={!!recording} />}
       <TouchableWithoutFeedback 
         onPressIn={startRecording}
