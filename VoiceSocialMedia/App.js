@@ -6,6 +6,7 @@ import * as SQLite from 'expo-sqlite';
 import * as FileSystem from 'expo-file-system';
 import FriendAudioPlayer from './components/FriendAudioPlayer';
 import Friend from './models/Friend';
+import PrettyButton from './components/PrettyButton';
 
 const db = SQLite.openDatabase('recordings.db');
 
@@ -22,12 +23,11 @@ export default function App() {
     require('./assets/steveAudio2.mp3'), 
     require('./assets/steveAudio3.mp3')
   ]);
-
+  
   const Jimmy = new Friend('Jimmy', [
     require('./assets/jimmyAudio1.mp3'),
     require('./assets/jimmyAudio2.mp3'),
   ]);
-  
 
 
 
@@ -219,29 +219,27 @@ function playRecording(index) {
         </View>
       </TouchableWithoutFeedback>
       <View style={{ height: 20 }} />
-      <Button 
-        title="Play Sound"
-        onPress={playSound}
-      />
+      <PrettyButton 
+      title="Play Sound"
+      onPress={playSound}
+    />
 
-<Button 
-        title="Save Recording"
-        onPress={saveRecordingToDB}
-      />
-      <View style={{ height: 20 }} />
-    <Button 
+    <PrettyButton 
+      title="Save Recording"
+      onPress={saveRecordingToDB}
+    />
+
+    <PrettyButton 
       title="Play Audio 1"
       onPress={() => playRecording(0)}
     />
 
-    <View style={{ height: 20 }} />
-    <Button 
+    <PrettyButton 
       title="Play Audio 2"
       onPress={() => playRecording(1)}
     />
 
-    <View style={{ height: 20 }} />
-    <Button 
+    <PrettyButton 
       title="Play Audio 3"
       onPress={() => playRecording(2)}
     />
