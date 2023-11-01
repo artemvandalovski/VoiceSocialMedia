@@ -22,6 +22,11 @@ export default function App() {
     require('./assets/steveAudio2.mp3'), 
     require('./assets/steveAudio3.mp3')
   ]);
+
+  const Jimmy = new Friend('Jimmy', [
+    require('./assets/jimmyAudio1.mp3'),
+    require('./assets/jimmyAudio2.mp3'),
+  ]);
   
 
 
@@ -202,6 +207,7 @@ function playRecording(index) {
     <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
 
 <FriendAudioPlayer friend={Steve} />
+<FriendAudioPlayer friend={Jimmy} />
 
       {recording && <AudioFeedback isRecording={!!recording} />}
       <TouchableWithoutFeedback 
