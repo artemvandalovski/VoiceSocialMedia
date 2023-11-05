@@ -18,7 +18,7 @@ export default function AudioFeedback({ isRecording }) {
       }, 100);
     } else {
       if (interval) {
-        clearInterval(interval);  // Ensure interval is cleared when isRecording becomes false
+        clearInterval(interval);
       }
       Animated.timing(animation, {
         toValue: 0.3,
@@ -29,7 +29,7 @@ export default function AudioFeedback({ isRecording }) {
 
     return () => {
       if (interval) {
-        clearInterval(interval);  // Clear interval when component is unmounted or re-rendered
+        clearInterval(interval);
       }
     }
   }, [isRecording]);
@@ -43,10 +43,10 @@ export default function AudioFeedback({ isRecording }) {
 
 const styles = StyleSheet.create({
   bar: {
-    height: 50,
-    width: 120,
-    backgroundColor: 'gray',
-    alignSelf: 'center',
+    width: '90%',
+    height: 20,
+    borderRadius: 100,
+    backgroundColor: 'dodgerblue',
     margin: 10,
   },
 });
