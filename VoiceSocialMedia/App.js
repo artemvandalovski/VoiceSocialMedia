@@ -1,17 +1,15 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import { LogBox } from 'react-native';
 import { NativeBaseProvider, ScrollView } from 'native-base';
-import Recording from './models/recording';
-import RecordingsDB from './services/db';
+import RecordingsDB from './services/recordingsDB';
 import AudioRecorder from './components/AudioRecorder';
 import VoiceMessagesList from './components/VoiceMessagesList';
 
-export default function App() {
+const App = () => {
   const [recordings, setRecordings] = useState([]);
 
   const updateRecordings = useCallback(async () => {
-    const data = await RecordingsDB.getAllRecordings();
-    const recordingsList = data.map(rec => new Recording(rec.id, rec.uri, rec.user));
+    const recordingsList = await RecordingsDB.getAllRecordings()
     setRecordings(recordingsList);
   }, []);
 
@@ -32,3 +30,5 @@ export default function App() {
     </NativeBaseProvider >
   );
 }
+
+export default App;

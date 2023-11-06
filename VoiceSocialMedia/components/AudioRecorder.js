@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Audio } from 'expo-av';
 import { Box, Button, HStack, VStack } from "native-base";
 import * as FileSystem from 'expo-file-system';
-import RecordingsDB from '../services/db';
+import RecordingsDB from '../services/recordingsDB';
 import CustomIcon from './CustomIcon';
 import AudioFeedback from './AudioFeedback';
 
@@ -10,7 +10,7 @@ const AudioRecorder = ({ onNewRecording }) => {
   const [recordingStatus, setRecordingStatus] = useState(false);
   const [recordingObject, setRecordingObject] = useState(null);
 
-  const randomPeople = ['Steve', 'John', 'Mary', 'Jane', 'Bob', 'Alice', 'Mark', 'Sara', 'Tom', 'Kate', 'Mike', 'Linda', 'David', 'Emily', 'Paul', 'Anna', 'Chris', 'Julia', 'Jack', 'Emma', 'James', 'Olivia', 'Robert', 'Sophia', 'Michael', 'Isabella', 'William', 'Charlotte', 'Richard', 'Amelia', 'Joseph', 'Evelyn', 'Thomas', 'Abigail', 'Charles', 'Harper', 'Christopher', 'Emily', 'Daniel', 'Elizabeth', 'Matthew', 'Avery', 'Anthony', 'Sofia', 'Donald', 'Ella', 'Mark', 'Madison', 'Steven', 'Scarlett', 'Andrew', 'Victoria', 'Kenneth', 'Aria', 'George', 'Grace', 'Joshua', 'Chloe', 'Kevin', 'Camila', 'Brian', 'Penelope', 'Edward', 'Riley', 'Ronald', 'Layla', 'Timothy', 'Lillian', 'Jason', 'Nora', 'Jeffrey', 'Zoey', 'Ryan', 'Mila', 'Jacob', 'Aubrey', 'Gary', 'Hannah', 'Nicholas', 'Lily', 'Eric', 'Addison', 'Stephen', 'Eleanor', 'Jonathan', 'Natalie', 'Larry', 'Luna', 'Justin', 'Savannah', 'Scott', 'Brooklyn', 'Brandon', 'Leah', 'Benjamin', 'Zoe', 'Samuel', 'Stella', 'Gregory', 'Hazel', 'Frank', 'Ellie', 'Alexander', 'Paisley', 'Raymond', 'Audrey', 'Patrick', 'Skylar', 'Jack', 'Violet', 'Dennis', 'Claire', 'Jerry', 'Bella', 'Tyler', 'Aurora', 'Aaron', 'Lucy', 'Jose', 'Anna', 'Henry', 'Samantha', 'Douglas', 'Caroline', 'Peter', 'Genesis', 'Adam', 'Aaliyah', 'Nathan', 'Kennedy', 'Zachary', 'Kinsley', 'Walter', 'Allison', 'Kyle', 'Maya', 'Harold', 'Sarah'];
+  const randomPeople = ['Steve', 'John', 'Mary', 'Jane', 'Bob', 'Alice'];
 
   async function setupRecorder() {
     const recording = new Audio.Recording();
@@ -24,10 +24,10 @@ const AudioRecorder = ({ onNewRecording }) => {
 
   useEffect(() => {
     async function requestPermissions() {
+      await Audio.requestPermissionsAsync();
       const { status } = await Audio.getPermissionsAsync();
       if (status !== 'granted') {
-        console.warn('Audio recording permissions are not granted');
-        return;
+        console.error('Audio permissions not granted!');
       }
     }
 
