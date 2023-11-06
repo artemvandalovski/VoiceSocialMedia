@@ -1,7 +1,7 @@
 # Voice Social Media
 Short prototype for school project from Artem and Shouvik
 
-<img src="image.png" width="300">
+<img src="image.jpg" width="300">
 
 ## Installation and Execution
 
